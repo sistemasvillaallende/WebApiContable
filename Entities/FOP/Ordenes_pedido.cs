@@ -5,7 +5,11 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using MOTOR_WORKFLOW.Models;
 using Web_Api_Contable.Entities.GENERAL;
+using Web_Api_Contable.Models;
+using WSAfip;
 
 namespace Web_Api_Contable.Entities.FOP
 {
@@ -281,204 +285,299 @@ namespace Web_Api_Contable.Entities.FOP
                 throw ex;
             }
         }
-        public static int insert(Ordenes_pedido obj)
+        private static int GenerarNuevoNroOrden(SqlConnection conn, SqlTransaction tx)
         {
-            try
+            int nuevo;
+
+            using (var cmd = new SqlCommand("SELECT Nro_orden_pedido FROM numeros_claves", conn, tx))
             {
-                StringBuilder sql = new StringBuilder();
-                sql.AppendLine("INSERT INTO Ordenes_pedido(");
-                sql.AppendLine("Nro_orden_pedido");
-                sql.AppendLine(", Fecha_orden_pedido");
-                sql.AppendLine(", Total");
-                sql.AppendLine(", Saldo");
-                sql.AppendLine(", Cod_proveedor");
-                sql.AppendLine(", Cod_oficina_origen");
-                sql.AppendLine(", Cod_oficina_destino");
-                sql.AppendLine(", Solicitante");
-                sql.AppendLine(", Aprobado");
-                sql.AppendLine(", Anulado");
-                sql.AppendLine(", Usuario");
-                sql.AppendLine(", Observacion");
-                sql.AppendLine(", Finalizado");
-                sql.AppendLine(", Asignado");
-                sql.AppendLine(", Nro_orden_compra");
-                sql.AppendLine(", Forma_pago");
-                sql.AppendLine(", Nro_presupuesto");
-                sql.AppendLine(", Nro_facturas");
-                sql.AppendLine(", Fecha_orden_compra");
-                sql.AppendLine(", Recibida");
-                sql.AppendLine(", Fecha_recepcion");
-                sql.AppendLine(", Web");
-                sql.AppendLine(", EntregadaPor");
-                sql.AppendLine(", Fecha_aprobacion");
-                sql.AppendLine(", Cod_estado_op");
-                sql.AppendLine(", Id_liq_tk");
-                sql.AppendLine(")");
-                sql.AppendLine("VALUES");
-                sql.AppendLine("(");
-                sql.AppendLine("@Nro_orden_pedido");
-                sql.AppendLine(", @Fecha_orden_pedido");
-                sql.AppendLine(", @Total");
-                sql.AppendLine(", @Saldo");
-                sql.AppendLine(", @Cod_proveedor");
-                sql.AppendLine(", @Cod_oficina_origen");
-                sql.AppendLine(", @Cod_oficina_destino");
-                sql.AppendLine(", @Solicitante");
-                sql.AppendLine(", @Aprobado");
-                sql.AppendLine(", @Anulado");
-                sql.AppendLine(", @Usuario");
-                sql.AppendLine(", @Observacion");
-                sql.AppendLine(", @Finalizado");
-                sql.AppendLine(", @Asignado");
-                sql.AppendLine(", @Nro_orden_compra");
-                sql.AppendLine(", @Forma_pago");
-                sql.AppendLine(", @Nro_presupuesto");
-                sql.AppendLine(", @Nro_facturas");
-                sql.AppendLine(", @Fecha_orden_compra");
-                sql.AppendLine(", @Recibida");
-                sql.AppendLine(", @Fecha_recepcion");
-                sql.AppendLine(", @Web");
-                sql.AppendLine(", @EntregadaPor");
-                sql.AppendLine(", @Fecha_aprobacion");
-                sql.AppendLine(", @Cod_estado_op");
-                sql.AppendLine(", @Id_liq_tk");
-                sql.AppendLine(")");
-                using (SqlConnection con = GetConnectionSIIMVA())
-                {
-                    SqlCommand cmd = con.CreateCommand();
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = sql.ToString();
-                    cmd.Parameters.AddWithValue("@Nro_orden_pedido", obj.nro_orden_pedido);
-                    cmd.Parameters.AddWithValue("@Fecha_orden_pedido", obj.fecha_orden_pedido);
-                    cmd.Parameters.AddWithValue("@Total", obj.total);
-                    cmd.Parameters.AddWithValue("@Saldo", obj.saldo);
-                    cmd.Parameters.AddWithValue("@Cod_proveedor", obj.cod_proveedor);
-                    cmd.Parameters.AddWithValue("@Cod_oficina_origen", obj.cod_oficina_origen);
-                    cmd.Parameters.AddWithValue("@Cod_oficina_destino", obj.cod_oficina_destino);
-                    cmd.Parameters.AddWithValue("@Solicitante", obj.solicitante);
-                    cmd.Parameters.AddWithValue("@Aprobado", obj.aprobado);
-                    cmd.Parameters.AddWithValue("@Anulado", obj.anulado);
-                    cmd.Parameters.AddWithValue("@Usuario", obj.usuario);
-                    cmd.Parameters.AddWithValue("@Observacion", obj.observacion);
-                    cmd.Parameters.AddWithValue("@Finalizado", obj.finalizado);
-                    cmd.Parameters.AddWithValue("@Asignado", obj.asignado);
-                    cmd.Parameters.AddWithValue("@Nro_orden_compra", obj.nro_orden_compra);
-                    cmd.Parameters.AddWithValue("@Forma_pago", obj.forma_pago);
-                    cmd.Parameters.AddWithValue("@Nro_presupuesto", obj.nro_presupuesto);
-                    cmd.Parameters.AddWithValue("@Nro_facturas", obj.nro_facturas);
-                    cmd.Parameters.AddWithValue("@Fecha_orden_compra", obj.fecha_orden_compra);
-                    cmd.Parameters.AddWithValue("@Recibida", obj.recibida);
-                    cmd.Parameters.AddWithValue("@Fecha_recepcion", obj.fecha_recepcion);
-                    cmd.Parameters.AddWithValue("@Web", obj.web);
-                    cmd.Parameters.AddWithValue("@EntregadaPor", obj.entregadaPor);
-                    cmd.Parameters.AddWithValue("@Fecha_aprobacion", obj.fecha_aprobacion);
-                    cmd.Parameters.AddWithValue("@Cod_estado_op", obj.cod_estado_op);
-                    cmd.Parameters.AddWithValue("@Id_liq_tk", obj.id_liq_tk);
-                    cmd.Connection.Open();
-                    return cmd.ExecuteNonQuery();
-                }
+                int max = (int)cmd.ExecuteScalar();
+                nuevo = max + 1;
             }
-            catch (Exception ex)
+
+            using (var updateCmd = new SqlCommand("UPDATE numeros_claves SET Nro_orden_pedido = @nuevo", conn, tx))
             {
-                throw ex;
+                updateCmd.Parameters.AddWithValue("@nuevo", nuevo);
+                updateCmd.ExecuteNonQuery();
+            }
+
+            return nuevo;
+        }
+
+        public static int insert(OrdenPedido obj, List<detalleOrdenPedido> detalleItems, Auditoria auditoria)
+        {
+            using (SqlConnection con = GetConnectionSIIMVA())
+            {
+                con.Open();
+
+                using (SqlTransaction tx = con.BeginTransaction())
+                {
+                    try
+                    {
+                        // Generar nuevo número de orden y asignarlo
+                        obj.nroOrdenPedido = GenerarNuevoNroOrden(con, tx);
+
+                        StringBuilder sql = new StringBuilder();
+                        sql.AppendLine("INSERT INTO Ordenes_pedido(");
+                        sql.AppendLine("Nro_orden_pedido, Fecha_orden_pedido, Total, Saldo, Cod_proveedor,");
+                        sql.AppendLine("Cod_oficina_origen, Cod_oficina_destino, Solicitante, Aprobado, Anulado,");
+                        sql.AppendLine("Usuario, Observacion, Finalizado, Asignado, Nro_orden_compra, Forma_pago,");
+                        sql.AppendLine("Nro_presupuesto, Nro_facturas, Fecha_orden_compra, Recibida, Fecha_recepcion,");
+                        sql.AppendLine("Web, EntregadaPor, Fecha_aprobacion, Cod_estado_op, Id_liq_tk,");
+                        sql.AppendLine("cod_secretaria_autoriza, cod_oficina_solicita, op_interna)");
+                        sql.AppendLine("VALUES (");
+                        sql.AppendLine("@Nro_orden_pedido, @Fecha_orden_pedido, @Total, @Saldo, @Cod_proveedor,");
+                        sql.AppendLine("@Cod_oficina_origen, @Cod_oficina_destino, @Solicitante, @Aprobado, @Anulado,");
+                        sql.AppendLine("@Usuario, @Observacion, @Finalizado, @Asignado, @Nro_orden_compra, @Forma_pago,");
+                        sql.AppendLine("@Nro_presupuesto, @Nro_facturas, @Fecha_orden_compra, @Recibida, @Fecha_recepcion,");
+                        sql.AppendLine("@Web, @EntregadaPor, @Fecha_aprobacion, @Cod_estado_op, @Id_liq_tk,");
+                        sql.AppendLine("@cod_secretaria_autoriza, @cod_oficina_solicita, @op_interna)");
+
+                        using (SqlCommand cmd = new SqlCommand(sql.ToString(), con, tx))
+                        {
+                            cmd.Parameters.AddWithValue("@Nro_orden_pedido", obj.nroOrdenPedido);
+                            cmd.Parameters.AddWithValue("@Fecha_orden_pedido", obj.fechaOrdenPedido ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Total", obj.total ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Saldo", obj.saldo ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Cod_proveedor", obj.codProveedor ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Cod_oficina_origen", obj.codOficinaOrigen ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Cod_oficina_destino", obj.codOficinaDestino ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Solicitante", string.IsNullOrEmpty(obj.solicitante) ? (object)DBNull.Value : obj.solicitante);
+                            cmd.Parameters.AddWithValue("@Aprobado", string.IsNullOrEmpty(obj.aprobado) ? (object)DBNull.Value : obj.aprobado);
+                            cmd.Parameters.AddWithValue("@Anulado", obj.anulado ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Usuario", string.IsNullOrEmpty(obj.usuario) ? (object)DBNull.Value : obj.usuario);
+                            cmd.Parameters.AddWithValue("@Observacion", string.IsNullOrEmpty(obj.observacion) ? (object)DBNull.Value : obj.observacion);
+                            cmd.Parameters.AddWithValue("@Finalizado", obj.finalizado ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Asignado", obj.asignado ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Nro_orden_compra", obj.nroOrdenCompra ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Forma_pago", string.IsNullOrEmpty(obj.formaPago) ? (object)DBNull.Value : obj.formaPago);
+                            cmd.Parameters.AddWithValue("@Nro_presupuesto", string.IsNullOrEmpty(obj.nroPresupuesto) ? (object)DBNull.Value : obj.nroPresupuesto);
+                            cmd.Parameters.AddWithValue("@Nro_facturas", string.IsNullOrEmpty(obj.nroFacturas) ? (object)DBNull.Value : obj.nroFacturas);
+                            cmd.Parameters.AddWithValue("@Fecha_orden_compra", obj.fechaOrdenCompra ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Recibida", obj.recibida ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Fecha_recepcion", obj.fechaRecepcion ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Web", obj.web ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@EntregadaPor", string.IsNullOrEmpty(obj.entregadaPor) ? (object)DBNull.Value : obj.entregadaPor);
+                            cmd.Parameters.AddWithValue("@Fecha_aprobacion", obj.fechaAprobacion ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Cod_estado_op", obj.codEstadoOp ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Id_liq_tk", obj.idLiqTk ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@cod_secretaria_autoriza", obj.codSecretariaAutoriza ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@cod_oficina_solicita", obj.codOficinaSolicita ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@op_interna", obj.opInterna);
+
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        int nroItem = 1;
+                        foreach (var item in detalleItems)
+                        {
+                            InsertDetalleOrdenPedido(obj.nroOrdenPedido, nroItem++, item, con, tx);
+                        }
+
+                        // auditoría
+                        var auditorCmd = new SqlCommand("AUDITOR_V2", con, tx);
+                        auditorCmd.CommandType = CommandType.StoredProcedure;
+
+                        auditorCmd.Parameters.AddWithValue("@usuario", auditoria.usuario );
+                        auditorCmd.Parameters.AddWithValue("@autorizacion",auditoria.autorizaciones);
+                        auditorCmd.Parameters.AddWithValue("@identificacion",auditoria.identificacion);
+                        auditorCmd.Parameters.AddWithValue("@observaciones", auditoria.observaciones);
+                        auditorCmd.Parameters.AddWithValue("@proceso", "NUEVA ORDEN DE PEDIDO");
+
+                        string detalle = $"Nº orden de pedido: {obj.nroOrdenPedido} Fecha de orden de pedido: {obj.fechaOrdenPedido:yyyy-MM-dd}";
+                        auditorCmd.Parameters.AddWithValue("@detalle", detalle);
+
+                        auditorCmd.ExecuteNonQuery();
+
+                        // actualizar LIQUIDACION_TICKETS
+                        if (obj.idLiqTk.HasValue && obj.idLiqTk.Value != 0)
+                        {
+                            var updLiqCmd = new SqlCommand(@"
+                            UPDATE LIQUIDACION_TICKETS 
+                            SET FINALIZADO = 1 
+                            WHERE ID_LIQUIDACION = @id_liq", con, tx);
+
+                            updLiqCmd.Parameters.AddWithValue("@id_liq", obj.idLiqTk.Value);
+
+                            updLiqCmd.ExecuteNonQuery();
+                        }
+
+                        tx.Commit();
+
+                        return obj.nroOrdenPedido;
+                    }
+                    catch
+                    {
+                        tx.Rollback();
+                        throw;
+                    }
+                }
             }
         }
-        public static void update(Ordenes_pedido obj)
+        private static void InsertDetalleOrdenPedido(int nroOrden,int nroItem,detalleOrdenPedido item,SqlConnection conn,SqlTransaction tx)
         {
-            try
+            string sql = @"
+            INSERT INTO detalle_orden_pedido
+            (Nro_orden_pedido, Nro_item, Desc_item, Cantidad, Precio, Importe, Ejercicio,
+             Anexo, Inciso, Partida_prin, Item, Sub_item, Partida, Sub_partida,
+             Id_secretaria, Id_direccion, Nro_cuenta, Usuario, id_oficina, id_programa)
+            VALUES
+            (@NroOrden, @NroItem, @DescItem, @Cantidad, @Precio, @Importe, @Ejercicio,
+             @Anexo, @Inciso, @PartidaPrin, @Item, @SubItem, @Partida, @SubPartida,
+             @IdSecretaria, @IdDireccion, @NroCuenta, @Usuario, @IdOficina, @IdPrograma)";
+
+            using (var cmd = new SqlCommand(sql, conn, tx))
             {
-                StringBuilder sql = new StringBuilder();
-                sql.AppendLine("UPDATE  Ordenes_pedido SET");
-                sql.AppendLine("Fecha_orden_pedido=@Fecha_orden_pedido");
-                sql.AppendLine(", Total=@Total");
-                sql.AppendLine(", Saldo=@Saldo");
-                sql.AppendLine(", Cod_proveedor=@Cod_proveedor");
-                sql.AppendLine(", Cod_oficina_origen=@Cod_oficina_origen");
-                sql.AppendLine(", Cod_oficina_destino=@Cod_oficina_destino");
-                sql.AppendLine(", Solicitante=@Solicitante");
-                sql.AppendLine(", Aprobado=@Aprobado");
-                sql.AppendLine(", Anulado=@Anulado");
-                sql.AppendLine(", Usuario=@Usuario");
-                sql.AppendLine(", Observacion=@Observacion");
-                sql.AppendLine(", Finalizado=@Finalizado");
-                sql.AppendLine(", Asignado=@Asignado");
-                sql.AppendLine(", Nro_orden_compra=@Nro_orden_compra");
-                sql.AppendLine(", Forma_pago=@Forma_pago");
-                sql.AppendLine(", Nro_presupuesto=@Nro_presupuesto");
-                sql.AppendLine(", Nro_facturas=@Nro_facturas");
-                sql.AppendLine(", Fecha_orden_compra=@Fecha_orden_compra");
-                sql.AppendLine(", Recibida=@Recibida");
-                sql.AppendLine(", Fecha_recepcion=@Fecha_recepcion");
-                sql.AppendLine(", Web=@Web");
-                sql.AppendLine(", EntregadaPor=@EntregadaPor");
-                sql.AppendLine(", Fecha_aprobacion=@Fecha_aprobacion");
-                sql.AppendLine(", Cod_estado_op=@Cod_estado_op");
-                sql.AppendLine(", Id_liq_tk=@Id_liq_tk");
-                sql.AppendLine("WHERE");
-                sql.AppendLine("Nro_orden_pedido=@Nro_orden_pedido");
-                using (SqlConnection con = GetConnectionSIIMVA())
-                {
-                    SqlCommand cmd = con.CreateCommand();
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = sql.ToString();
-                    cmd.Parameters.AddWithValue("@Nro_orden_pedido", obj.nro_orden_pedido);
-                    cmd.Parameters.AddWithValue("@Fecha_orden_pedido", obj.fecha_orden_pedido);
-                    cmd.Parameters.AddWithValue("@Total", obj.total);
-                    cmd.Parameters.AddWithValue("@Saldo", obj.saldo);
-                    cmd.Parameters.AddWithValue("@Cod_proveedor", obj.cod_proveedor);
-                    cmd.Parameters.AddWithValue("@Cod_oficina_origen", obj.cod_oficina_origen);
-                    cmd.Parameters.AddWithValue("@Cod_oficina_destino", obj.cod_oficina_destino);
-                    cmd.Parameters.AddWithValue("@Solicitante", obj.solicitante);
-                    cmd.Parameters.AddWithValue("@Aprobado", obj.aprobado);
-                    cmd.Parameters.AddWithValue("@Anulado", obj.anulado);
-                    cmd.Parameters.AddWithValue("@Usuario", obj.usuario);
-                    cmd.Parameters.AddWithValue("@Observacion", obj.observacion);
-                    cmd.Parameters.AddWithValue("@Finalizado", obj.finalizado);
-                    cmd.Parameters.AddWithValue("@Asignado", obj.asignado);
-                    cmd.Parameters.AddWithValue("@Nro_orden_compra", obj.nro_orden_compra);
-                    cmd.Parameters.AddWithValue("@Forma_pago", obj.forma_pago);
-                    cmd.Parameters.AddWithValue("@Nro_presupuesto", obj.nro_presupuesto);
-                    cmd.Parameters.AddWithValue("@Nro_facturas", obj.nro_facturas);
-                    cmd.Parameters.AddWithValue("@Fecha_orden_compra", obj.fecha_orden_compra);
-                    cmd.Parameters.AddWithValue("@Recibida", obj.recibida);
-                    cmd.Parameters.AddWithValue("@Fecha_recepcion", obj.fecha_recepcion);
-                    cmd.Parameters.AddWithValue("@Web", obj.web);
-                    cmd.Parameters.AddWithValue("@EntregadaPor", obj.entregadaPor);
-                    cmd.Parameters.AddWithValue("@Fecha_aprobacion", obj.fecha_aprobacion);
-                    cmd.Parameters.AddWithValue("@Cod_estado_op", obj.cod_estado_op);
-                    cmd.Parameters.AddWithValue("@Id_liq_tk", obj.id_liq_tk);
-                    cmd.Connection.Open();
-                    cmd.ExecuteNonQuery();
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
+                cmd.Parameters.AddWithValue("@NroOrden", nroOrden);
+                cmd.Parameters.AddWithValue("@NroItem", nroItem);
+                cmd.Parameters.AddWithValue("@DescItem", item.descItem ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Cantidad", item.cantidad ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Precio", item.precio ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Importe", item.importe ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Ejercicio", item.ejercicio ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Anexo", item.anexo ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Inciso", item.inciso ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@PartidaPrin", item.partidaPrin ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Item", item.item ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@SubItem", item.subItem ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Partida", item.partida ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@SubPartida", item.subPartida ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@IdSecretaria", item.idSecretaria ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@IdDireccion", item.idDireccion ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@NroCuenta", item.nroCuenta ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Usuario", item.usuario ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@IdOficina", item.idOficina ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@IdPrograma", item.idPrograma ?? (object)DBNull.Value);
+
+                cmd.ExecuteNonQuery();
             }
         }
-        public static void delete(Ordenes_pedido obj)
+
+        public static int update(int nroOrdenPedido, OrdenPedidoRequest request)
         {
+            using var conn = GetConnection();
+            conn.Open();
+            using var tx = conn.BeginTransaction();
+
             try
             {
-                StringBuilder sql = new StringBuilder();
-                sql.AppendLine("DELETE  Ordenes_pedido ");
-                sql.AppendLine("WHERE");
-                sql.AppendLine("Nro_orden_pedido=@Nro_orden_pedido");
-                using (SqlConnection con = GetConnectionSIIMVA())
+                // Validaciones
+                if (request.Orden.codProveedor == null)
+                    throw new Exception("Debe ingresar un proveedor.");
+
+                if (request.Orden.total <= 0)
+                    throw new Exception("El total de la orden debe ser mayor a cero.");
+
+                // Actualizar cabecera
+                var sqlUpdate = @"UPDATE Ordenes_pedido SET 
+                            Total = @Total,
+                            Saldo = @Saldo,
+                            Cod_proveedor = @CodProveedor,
+                            Observacion = @Observacion
+                          WHERE Nro_orden_pedido = @NroOrdenPedido";
+
+                using (var cmd = new SqlCommand(sqlUpdate, conn, tx))
                 {
-                    SqlCommand cmd = con.CreateCommand();
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = sql.ToString();
-                    cmd.Parameters.AddWithValue("@Nro_orden_pedido", obj.nro_orden_pedido);
-                    cmd.Connection.Open();
+                    cmd.Parameters.AddWithValue("@Total", request.Orden.total);
+                    cmd.Parameters.AddWithValue("@Saldo", request.Orden.saldo);
+                    cmd.Parameters.AddWithValue("@CodProveedor", request.Orden.codProveedor);
+                    cmd.Parameters.AddWithValue("@Observacion", request.Orden.observacion?? "");
+                    cmd.Parameters.AddWithValue("@NroOrdenPedido", nroOrdenPedido);
+
                     cmd.ExecuteNonQuery();
                 }
+
+                // Borrar detalle anterior
+                using (var cmdDel = new SqlCommand("DELETE FROM detalle_orden_pedido WHERE Nro_orden_pedido = @NroOrdenPedido", conn, tx))
+                {
+                    cmdDel.Parameters.AddWithValue("@NroOrdenPedido", nroOrdenPedido);
+                    cmdDel.ExecuteNonQuery();
+                }
+
+                // Insertar detalle nuevo
+                int nroItem = 1;
+                foreach (var item in request.DetalleItems)
+                {
+                    InsertDetalleOrdenPedido(nroOrdenPedido, nroItem++, item, conn, tx);
+                }
+
+                // Auditoría
+                using (var cmdAud = new SqlCommand("EXEC AUDITOR_V2 @usuario, @autorizacion, @identificacion, @observaciones, @proceso, @detalle", conn, tx))
+                {
+                    cmdAud.Parameters.AddWithValue("@usuario", request.Auditoria.usuario);
+                    cmdAud.Parameters.AddWithValue("@autorizacion", request.Auditoria.autorizaciones ?? "");
+                    cmdAud.Parameters.AddWithValue("@identificacion", request.Auditoria.identificacion);
+                    cmdAud.Parameters.AddWithValue("@observaciones", request.Auditoria.observaciones?? "");
+                    cmdAud.Parameters.AddWithValue("@proceso", "MODIFICA ORDEN PEDIDO");
+                    cmdAud.Parameters.AddWithValue("@detalle", $"Nº Orden Pedido: {nroOrdenPedido} Fecha Movimiento: {DateTime.Now:yyyy-MM-dd}");
+
+                    cmdAud.ExecuteNonQuery();
+                }
+
+                tx.Commit();
+                return nroOrdenPedido;
             }
-            catch (Exception)
+            catch
             {
+                tx.Rollback();
                 throw;
             }
         }
+
+        public static void Delete(int nroOrdenPedido)
+        {
+            using var conn = DALBase.GetConnection();
+            conn.Open();
+
+            using var tx = conn.BeginTransaction();
+
+            try
+            {
+                // Validar si la orden está asociada a una orden de compra
+                using (var checkCmd = new SqlCommand(
+                    @"SELECT Nro_orden_compra 
+                      FROM Ordenes_pedido 
+                      WHERE Nro_orden_pedido = @NroOrdenPedido
+                      AND Finalizado = 1", conn, tx))
+                {
+                    checkCmd.Parameters.AddWithValue("@NroOrdenPedido", nroOrdenPedido);
+
+                    var result = checkCmd.ExecuteScalar();
+
+                    if (result != DBNull.Value && result != null)
+                    {
+                        throw new Exception($"La orden está asociada a la orden de compra nro: {result}");
+                    }
+                }
+
+                // Elimina primero el detalle
+                using (var delDetalle = new SqlCommand(
+                    @"DELETE FROM Detalle_orden_pedido 
+                    WHERE Nro_orden_pedido = @NroOrdenPedido", conn, tx))
+                {
+                    delDetalle.Parameters.AddWithValue("@NroOrdenPedido", nroOrdenPedido);
+                    delDetalle.ExecuteNonQuery();
+                }
+
+                // Luego elimina la orden
+                using (var delOrden = new SqlCommand(
+                    @"DELETE FROM Ordenes_pedido 
+                    WHERE Nro_orden_pedido = @NroOrdenPedido", conn, tx))
+                {
+                    delOrden.Parameters.AddWithValue("@NroOrdenPedido", nroOrdenPedido);
+                    delOrden.ExecuteNonQuery();
+                }
+
+                tx.Commit();
+            }
+            catch
+            {
+                tx.Rollback();
+                throw;
+            }
+        }
+
+
 
 
     }

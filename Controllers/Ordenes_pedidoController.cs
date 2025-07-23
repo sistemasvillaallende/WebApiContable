@@ -1,5 +1,10 @@
+using System.Data.SqlClient;
+using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
+using MOTOR_WORKFLOW.Models;
 using Newtonsoft.Json;
+using Web_Api_Contable.Entities.FOP;
+using Web_Api_Contable.Models;
 using Web_Api_Contable.Services.FOP;
 
 namespace Web_Api_Contable.Controllers
@@ -36,6 +41,50 @@ namespace Web_Api_Contable.Controllers
             var Ordenes_pedido = _Ordenes_pedidoService.readOrdenesByCuit(cuit);
             return Ok(Ordenes_pedido);
         }
+        [HttpPost]
+        public IActionResult insert([FromBody] OrdenPedidoRequest request)
+        {
+            try
+            {
+                this._Ordenes_pedidoService.insert(request.Orden, request.DetalleItems,request.Auditoria);
+                return Ok(new { message = "Orden de pedido insertada correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+        [HttpPost]
+        public IActionResult Update(int nroOrdenPedido, [FromBody] OrdenPedidoRequest request)
+        {
+            try
+            {
+                _Ordenes_pedidoService.update(nroOrdenPedido, request);
+                return Ok(new { message = "Orden de pedido modificada correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public IActionResult Delete(int nroOrdenPedido)
+        {
+            try
+            {
+                _Ordenes_pedidoService.delete(nroOrdenPedido);
+                return Ok(new { message = "Orden de pedido eliminada correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+
+
+
     }
 }
 

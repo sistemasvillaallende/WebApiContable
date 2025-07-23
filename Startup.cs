@@ -32,6 +32,10 @@ namespace Web_Api_Contable
             services.AddScoped<IDetalle_orden_pedidoService, Detalle_orden_pedidoService>();
             services.AddScoped<IFactura_x_orden_pedidoServices, Factura_x_orden_pedidoService>();
             services.AddScoped<IFactura_x_orden_pedidoServices, Factura_x_orden_pedidoService>();
+            services.AddScoped<ISecretariasService, SecretariasServices>();
+            services.AddScoped<IDireccionService, DireccionesServices>();
+            services.AddScoped<IProgramasService, ProgramaService>();
+            services.AddScoped<IOficinaService,OficinaService>();
             ////
             ///
             services.AddScoped<ISM_Solicitud_materialService, SM_Solicitud_materialService>();

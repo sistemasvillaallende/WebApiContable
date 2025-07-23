@@ -1,4 +1,7 @@
+using Microsoft.AspNetCore.Mvc;
+using MOTOR_WORKFLOW.Models;
 using Web_Api_Contable.Entities.FOP;
+using Web_Api_Contable.Models;
 
 namespace Web_Api_Contable.Services.FOP
 
@@ -38,33 +41,33 @@ namespace Web_Api_Contable.Services.FOP
                 throw;
             }
         }
-        public int insert(Ordenes_pedido obj)
+        public int insert(OrdenPedido obj, List<detalleOrdenPedido> detalleItems, Auditoria auditoria)
         {
             try
             {
-                return Ordenes_pedido.insert(obj);
+                return Ordenes_pedido.insert(obj,detalleItems,auditoria);
             }
             catch (Exception ex)
             {
                 throw ex;
             }
         }
-        public void update(Ordenes_pedido obj)
+        public void update(int nroOrdenPedido, [FromBody] OrdenPedidoRequest request)
         {
             try
             {
-                Ordenes_pedido.update(obj);
+                Ordenes_pedido.update(nroOrdenPedido,request);
             }
             catch (Exception ex)
             {
                 throw ex;
             }
         }
-        public void delete(Ordenes_pedido obj)
+        public void delete(int nroOrdenPedido)
         {
             try
             {
-                Ordenes_pedido.delete(obj);
+                Ordenes_pedido.Delete(nroOrdenPedido);
             }
             catch (Exception ex)
             {
