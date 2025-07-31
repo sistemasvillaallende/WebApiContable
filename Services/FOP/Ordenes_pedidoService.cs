@@ -75,6 +75,18 @@ namespace Web_Api_Contable.Services.FOP
             }
         }
 
+        public void anular(int nroOrdenPedido, [FromBody] Auditoria auditoria)
+        {
+            try
+            {
+                Ordenes_pedido.anular(nroOrdenPedido, auditoria);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
         public List<Ordenes_pedido> readOrdenesByCuit(string cuit)
         {
             try

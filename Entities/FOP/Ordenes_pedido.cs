@@ -578,6 +578,58 @@ namespace Web_Api_Contable.Entities.FOP
         }
 
 
+        public static void anular(int nroOrdenPedido,Auditoria auditoria)
+        {
+            using var conn = DALBase.GetConnection();
+            conn.Open();
+
+            using var tx = conn.BeginTransaction();
+
+            try
+            {
+
+                using (var checkFinalizada = new SqlCommand(
+                    @"SELECT 1
+                      FROM ORDENES_PEDIDO op
+                      WHERE op.Nro_orden_pedido = @NroOrdenPedido
+                        AND op.Finalizado = 1
+                        AND EXISTS (
+                            SELECT 1 FROM ORDENES_COMPRA oc
+                            WHERE oc.nro_nota_pedido = op.Nro_orden_pedido
+                        )", conn, tx))
+                {
+                    checkFinalizada.Parameters.AddWithValue("@NroOrdenPedido", nroOrdenPedido);
+                    var existeFinalizada = checkFinalizada.ExecuteScalar();
+
+                    if (existeFinalizada != null && existeFinalizada != DBNull.Value)
+                    {
+                        throw new InvalidOperationException("No se puede anular la orden porque está finalizada y tiene al menos una orden de compra asociada.");
+                    }
+                }
+
+
+                // Luego Anular
+                using (var cmdAud = new SqlCommand("EXEC AUDITOR_V2 @usuario, @autorizacion, @identificacion, @observaciones, @proceso, @detalle", conn, tx))
+                {
+                    cmdAud.Parameters.AddWithValue("@usuario", auditoria.usuario);
+                    cmdAud.Parameters.AddWithValue("@autorizacion", auditoria.autorizaciones ?? "");
+                    cmdAud.Parameters.AddWithValue("@identificacion", auditoria.identificacion);
+                    cmdAud.Parameters.AddWithValue("@observaciones", auditoria.observaciones ?? "");
+                    cmdAud.Parameters.AddWithValue("@proceso", "ANULAR ORDEN PEDIDO");
+                    cmdAud.Parameters.AddWithValue("@detalle", $"Nº Orden Pedido: {nroOrdenPedido} Fecha Movimiento: {DateTime.Now:yyyy-MM-dd}");
+
+                    cmdAud.ExecuteNonQuery();
+                }
+
+                tx.Commit();
+            }
+            catch
+            {
+                tx.Rollback();
+                throw;
+            }
+        }
+
 
 
     }

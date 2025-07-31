@@ -82,6 +82,20 @@ namespace Web_Api_Contable.Controllers
             }
         }
 
+        [HttpPost]
+        public IActionResult Anular(int nroOrdenPedido, [FromBody] Auditoria auditoria)
+        {
+            try
+            {
+                _Ordenes_pedidoService.anular(nroOrdenPedido, auditoria);
+                return Ok(new { message = "Orden de pedido anulada correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
 
 
 
