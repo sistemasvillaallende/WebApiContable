@@ -19,28 +19,6 @@ namespace Web_Api_Contable.Controllers
             _Ordenes_pedidoService = Ordenes_pedidoService;
         }
 
-        [HttpGet]
-        public IActionResult getByPk(int Nro_orden_pedido)
-        {
-            var Ordenes_pedido = _Ordenes_pedidoService.getByPk(Nro_orden_pedido);
-            if (Ordenes_pedido == null)
-            {
-                return BadRequest(new { message = "Error al obtener los datos" });
-            }
-            return Ok(Ordenes_pedido);
-        }
-        [HttpGet]
-        public IActionResult readOrdenesByProveedor(int codigo)
-        {
-            var Ordenes_pedido = _Ordenes_pedidoService.readOrdenesByProveedor(codigo);
-            return Ok(Ordenes_pedido);
-        }
-        [HttpGet]
-        public IActionResult readOrdenesByCuit(string cuit)
-        {
-            var Ordenes_pedido = _Ordenes_pedidoService.readOrdenesByCuit(cuit);
-            return Ok(Ordenes_pedido);
-        }
         [HttpPost]
         public IActionResult insert([FromBody] OrdenPedidoRequest request)
         {
@@ -95,6 +73,35 @@ namespace Web_Api_Contable.Controllers
                 return StatusCode(500, new { error = ex.Message });
             }
         }
+
+        [HttpGet]
+        public IActionResult GetOrdenByFecha(DateTime fechaDesde, DateTime fechaHasta,int tipoSeleccion)
+        {
+            try
+            {
+               var resultado = _Ordenes_pedidoService.getOrdenByFecha(fechaDesde,fechaHasta,tipoSeleccion);
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public IActionResult GetHistorialByNro(int nroOrdenPedido)
+        {
+            try
+            {
+                var resultado = _Ordenes_pedidoService.getHistorialByNro(nroOrdenPedido);
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
 
 
 

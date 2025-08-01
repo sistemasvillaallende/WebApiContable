@@ -13,14 +13,14 @@ namespace Web_Api_Contable.Services.FOP
 {
     public interface IOrdenes_pedidoService
     {
-        public List<Ordenes_pedido> read();
-        public Ordenes_pedido getByPk(int Nro_orden_pedido);
+
         public int insert(OrdenPedido obj, List<detalleOrdenPedido> detalleItems,Auditoria auditoria);
         public void update(int nroOrdenPedido, [FromBody] OrdenPedidoRequest request);
         public void delete(int nroOrdenPedido);
         public void anular(int nroOrdenPedido,[FromBody] Auditoria auditoria);
-        public List<Ordenes_pedido> readOrdenesByProveedor(int cod_proveedor);
-        public List<Ordenes_pedido> readOrdenesByCuit(string cuit);
+        public List<Ordenes_pedido> getOrdenByFecha(DateTime fechaDesde, DateTime fechaHasta, int tipoSeleccion);
+        public List<HistorialOrdenDePedido> getHistorialByNro(int nroOrdenPedido);
+
     }
 }
 

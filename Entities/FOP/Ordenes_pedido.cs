@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -15,275 +16,45 @@ namespace Web_Api_Contable.Entities.FOP
 {
     public class Ordenes_pedido : DALBase
     {
-        public int nro_orden_pedido { get; set; }
-        public string fecha_orden_pedido { get; set; }
-        public decimal total { get; set; }
-        public decimal saldo { get; set; }
-        public int cod_proveedor { get; set; }
-        public int cod_oficina_origen { get; set; }
-        public int cod_oficina_destino { get; set; }
-        public string solicitante { get; set; }
-        public string aprobado { get; set; }
-        public bool anulado { get; set; }
-        public string usuario { get; set; }
-        public string observacion { get; set; }
-        public bool finalizado { get; set; }
-        public short asignado { get; set; }
-        public int nro_orden_compra { get; set; }
-        public string forma_pago { get; set; }
-        public string nro_presupuesto { get; set; }
-        public string nro_facturas { get; set; }
-        public DateTime fecha_orden_compra { get; set; }
-        public short recibida { get; set; }
-        public DateTime fecha_recepcion { get; set; }
-        public short web { get; set; }
-        public string entregadaPor { get; set; }
-        public DateTime fecha_aprobacion { get; set; }
-        public short cod_estado_op { get; set; }
-        public int id_liq_tk { get; set; }
-        public string nom_proveedor { get; set; }
-        public string oficina_destino { get; set; }
-
-        public string status { get; set; }
+        public int? nro_orden_pedido { get; set; }
+        public string? fecha_orden_pedido { get; set; }
+        public string? oficina_destino { get; set; }
+        public string? nom_proveedor { get; set; }
+        public string? solicitante { get; set; }
+        public string? aprobado { get; set; }
+        public string? nro_presupuesto { get; set; }
+        public string? nro_facturas { get; set; }
+        public DateTime? fecha_recepcion { get; set; }
+        public decimal? total { get; set; }
+        public string? observacion { get; set; }
+        public int? nro_orden_compra { get; set; }
+        public DateTime? fecha_orden_compra { get; set; }
+        public DateTime? fecha_aprobacion { get; set; }
+        public DateTime? fecha_envio_tc { get; set; }
+        public decimal? saldo { get; set; }
+        public string? usuario { get; set; }
+        public string? status { get; set; }
 
         public Ordenes_pedido()
         {
-            nro_orden_pedido = 0;
-            fecha_orden_pedido = DateTime.Today.ToShortDateString();
-            total = 0;
-            saldo = 0;
-            cod_proveedor = 0;
-            cod_oficina_origen = 0;
-            cod_oficina_destino = 0;
-            solicitante = string.Empty;
-            aprobado = string.Empty;
-            anulado = false;
-            usuario = string.Empty;
-            observacion = string.Empty;
-            finalizado = false;
-            asignado = 0;
-            nro_orden_compra = 0;
-            forma_pago = string.Empty;
-            nro_presupuesto = string.Empty;
-            nro_facturas = string.Empty;
-            fecha_orden_compra = DateTime.Now;
-            recibida = 0;
-            fecha_recepcion = DateTime.Now;
-            web = 0;
-            entregadaPor = string.Empty;
-            fecha_aprobacion = DateTime.Now;
-            cod_estado_op = 0;
-            id_liq_tk = 0;
-            nom_proveedor = string.Empty;
-            oficina_destino = string.Empty;
-            status = string.Empty;
-        }
-        private static List<Ordenes_pedido> mapeo(SqlDataReader dr)
-        {
-            List<Ordenes_pedido> lst = new List<Ordenes_pedido>();
-            Ordenes_pedido obj;
-            if (dr.HasRows)
-            {
-                int Nro_orden_pedido = dr.GetOrdinal("Nro_orden_pedido");
-                int Fecha_orden_pedido = dr.GetOrdinal("Fecha_orden_pedido");
-                int Total = dr.GetOrdinal("Total");
-                int Saldo = dr.GetOrdinal("Saldo");
-                int Cod_proveedor = dr.GetOrdinal("Cod_proveedor");
-                int Cod_oficina_origen = dr.GetOrdinal("Cod_oficina_origen");
-                int Cod_oficina_destino = dr.GetOrdinal("Cod_oficina_destino");
-                int Solicitante = dr.GetOrdinal("Solicitante");
-                int Aprobado = dr.GetOrdinal("Aprobado");
-                int Anulado = dr.GetOrdinal("Anulado");
-                int Usuario = dr.GetOrdinal("Usuario");
-                int Observacion = dr.GetOrdinal("Observacion");
-                int Finalizado = dr.GetOrdinal("Finalizado");
-                int Asignado = dr.GetOrdinal("Asignado");
-                int Nro_orden_compra = dr.GetOrdinal("Nro_orden_compra");
-                int Forma_pago = dr.GetOrdinal("Forma_pago");
-                int Nro_presupuesto = dr.GetOrdinal("Nro_presupuesto");
-                int Nro_facturas = dr.GetOrdinal("Nro_facturas");
-                int Fecha_orden_compra = dr.GetOrdinal("Fecha_orden_compra");
-                int Recibida = dr.GetOrdinal("Recibida");
-                int Fecha_recepcion = dr.GetOrdinal("Fecha_recepcion");
-                int Web = dr.GetOrdinal("Web");
-                int EntregadaPor = dr.GetOrdinal("EntregadaPor");
-                int Fecha_aprobacion = dr.GetOrdinal("Fecha_aprobacion");
-                int Cod_estado_op = dr.GetOrdinal("Cod_estado_op");
-                int Id_liq_tk = dr.GetOrdinal("Id_liq_tk");
-                int nom_proveedor = dr.GetOrdinal("nom_proveedor");
-                int oficina_destino = dr.GetOrdinal("oficina_destino");
-                int status = dr.GetOrdinal("status");
-                while (dr.Read())
-                {
-                    obj = new Ordenes_pedido();
-                    if (!dr.IsDBNull(Nro_orden_pedido)) { obj.nro_orden_pedido = dr.GetInt32(Nro_orden_pedido); }
-                    if (!dr.IsDBNull(Fecha_orden_pedido)) { obj.fecha_orden_pedido = dr.GetDateTime(Fecha_orden_pedido).ToShortDateString(); }
-                    if (!dr.IsDBNull(Total)) { obj.total = dr.GetDecimal(Total); }
-                    if (!dr.IsDBNull(Saldo)) { obj.saldo = dr.GetDecimal(Saldo); }
-                    if (!dr.IsDBNull(Cod_proveedor)) { obj.cod_proveedor = dr.GetInt32(Cod_proveedor); }
-                    if (!dr.IsDBNull(Cod_oficina_origen)) { obj.cod_oficina_origen = dr.GetInt32(Cod_oficina_origen); }
-                    if (!dr.IsDBNull(Cod_oficina_destino)) { obj.cod_oficina_destino = dr.GetInt32(Cod_oficina_destino); }
-                    if (!dr.IsDBNull(Solicitante)) { obj.solicitante = dr.GetString(Solicitante); }
-                    if (!dr.IsDBNull(Aprobado)) { obj.aprobado = dr.GetString(Aprobado); }
-                    if (!dr.IsDBNull(Anulado)) { obj.anulado = dr.GetBoolean(Anulado); }
-                    if (!dr.IsDBNull(Usuario)) { obj.usuario = dr.GetString(Usuario); }
-                    if (!dr.IsDBNull(Observacion)) { obj.observacion = dr.GetString(Observacion); }
-                    if (!dr.IsDBNull(Finalizado)) { obj.finalizado = dr.GetBoolean(Finalizado); }
-                    if (!dr.IsDBNull(Asignado)) { obj.asignado = dr.GetInt16(Asignado); }
-                    if (!dr.IsDBNull(Nro_orden_compra)) { obj.nro_orden_compra = dr.GetInt32(Nro_orden_compra); }
-                    if (!dr.IsDBNull(Forma_pago)) { obj.forma_pago = dr.GetString(Forma_pago); }
-                    if (!dr.IsDBNull(Nro_presupuesto)) { obj.nro_presupuesto = dr.GetString(Nro_presupuesto); }
-                    if (!dr.IsDBNull(Nro_facturas)) { obj.nro_facturas = dr.GetString(Nro_facturas); }
-                    if (!dr.IsDBNull(Fecha_orden_compra)) { obj.fecha_orden_compra = dr.GetDateTime(Fecha_orden_compra); }
-                    if (!dr.IsDBNull(Recibida)) { obj.recibida = dr.GetInt16(Recibida); }
-                    if (!dr.IsDBNull(Fecha_recepcion)) { obj.fecha_recepcion = dr.GetDateTime(Fecha_recepcion); }
-                    if (!dr.IsDBNull(Web)) { obj.web = dr.GetInt16(Web); }
-                    if (!dr.IsDBNull(EntregadaPor)) { obj.entregadaPor = dr.GetString(EntregadaPor); }
-                    if (!dr.IsDBNull(Fecha_aprobacion)) { obj.fecha_aprobacion = dr.GetDateTime(Fecha_aprobacion); }
-                    if (!dr.IsDBNull(Cod_estado_op)) { obj.cod_estado_op = dr.GetInt16(Cod_estado_op); }
-                    if (!dr.IsDBNull(Id_liq_tk)) { obj.id_liq_tk = dr.GetInt32(Id_liq_tk); }
-                    if (!dr.IsDBNull(nom_proveedor)) { obj.nom_proveedor = dr.GetString(nom_proveedor); }
-                    if (!dr.IsDBNull(oficina_destino)) { obj.oficina_destino = dr.GetString(oficina_destino); }
-                    if (!dr.IsDBNull(status)) { obj.status = dr.GetString(status); }
-                    lst.Add(obj);
-                }
-            }
-            return lst;
-        }
-        public static List<Ordenes_pedido> read()
-        {
-            try
-            {
-                List<Ordenes_pedido> lst = new List<Ordenes_pedido>();
-                using (SqlConnection con = GetConnectionSIIMVA())
-                {
-                    SqlCommand cmd = con.CreateCommand();
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = "SELECT * FROM Ordenes_pedido";
-                    cmd.Connection.Open();
-                    SqlDataReader dr = cmd.ExecuteReader();
-                    lst = mapeo(dr);
-                    return lst;
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-        public static List<Ordenes_pedido> readOrdenesByProveedor(int cod_proveedor)
-        {
-            try
-            {
-                List<Ordenes_pedido> lst = new List<Ordenes_pedido>();
-                string strSQL = @"SELECT a.*, p.nom_proveedor as nom_proveedor, 
-                                    o.nombre_oficina as oficina_destino,
-                                    CASE
-	                                    WHEN a.anulado =1 THEN 'Rechazada'
-	                                    WHEN a.recibida = 1 THEN 'Aprobada'
-	                                    WHEN a.Finalizado = 1 THEN 'Finalizada'
-                                        ELSE 'Pendiente'
-                                    END AS status
-                                    FROM Ordenes_pedido a
-                                    LEFT JOIN PROVEEDORES p on
-                                    a.cod_proveedor=p.cod_proveedor
-                                    LEFT JOIN OFICINAS o on
-                                    a.Cod_oficina_destino=o.codigo_oficina
-                                    WHERE a.Cod_proveedor=@cod_proveedor
-                                    ORDER By a.nro_orden_pedido desc";
-                using (SqlConnection con = GetConnectionSIIMVA())
-                {
-                    SqlCommand cmd = con.CreateCommand();
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = strSQL.ToString();
-                    cmd.Parameters.AddWithValue("@cod_proveedor", cod_proveedor);
-                    cmd.Connection.Open();
-                    SqlDataReader dr = cmd.ExecuteReader();
-                    lst = mapeo(dr);
-                    return lst;
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-        public static List<Ordenes_pedido> readOrdenesByCuit(string cuit)
-        {
-            try
-            {
-                List<Ordenes_pedido> lst = new List<Ordenes_pedido>();
-                string strSQL = @"SELECT a.*, p.nom_proveedor as nom_proveedor, 
-                                    o.nombre_oficina as oficina_destino,
-                                    CASE
-	                                    WHEN a.anulado =1 THEN 'Rechazada'
-	                                    WHEN a.recibida = 1 THEN 'Aprobada'
-	                                    WHEN a.Finalizado = 1 THEN 'Finalizada'
-                                        ELSE 'Pendiente'
-                                    END AS status
-                                    FROM Ordenes_pedido a
-                                    LEFT JOIN PROVEEDORES p on
-                                    a.cod_proveedor=p.cod_proveedor
-                                    LEFT JOIN OFICINAS o on
-                                    a.Cod_oficina_destino=o.codigo_oficina
-                                    WHERE p.nro_cuit=@cuit
-                                    ORDER By a.nro_orden_pedido desc";
-                using (SqlConnection con = GetConnectionSIIMVA())
-                {
-                    SqlCommand cmd = con.CreateCommand();
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = strSQL.ToString();
-                    cmd.Parameters.AddWithValue("@cuit", cuit);
-                    cmd.Connection.Open();
-                    SqlDataReader dr = cmd.ExecuteReader();
-                    lst = mapeo(dr);
-                    return lst;
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-        public static Ordenes_pedido getByPk(int Nro_orden_pedido)
-        {
-            try
-            {
-                string strSQL = @"SELECT a.*, p.nom_proveedor as nom_proveedor, 
-                                    o.nombre_oficina as oficina_destino,
-                                    CASE
-	                                    WHEN a.anulado =1 THEN 'Rechazada'
-	                                    WHEN a.recibida = 1 THEN 'Aprobada'
-	                                    WHEN a.Finalizado = 1 THEN 'Finalizada'
-                                        ELSE 'Pendiente'
-                                    END AS status
-                                    FROM Ordenes_pedido a
-                                    LEFT JOIN PROVEEDORES p on
-                                    a.cod_proveedor=p.cod_proveedor
-                                    LEFT JOIN OFICINAS o on
-                                    a.Cod_oficina_destino=o.codigo_oficina
-                                    WHERE a.nro_orden_pedido=@nro_orden_pedido
-                                    ORDER By a.nro_orden_pedido desc";
-
-                Ordenes_pedido obj = null;
-                using (SqlConnection con = GetConnectionSIIMVA())
-                {
-                    SqlCommand cmd = con.CreateCommand();
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = strSQL.ToString();
-                    cmd.Parameters.AddWithValue("@Nro_orden_pedido", Nro_orden_pedido);
-                    cmd.Connection.Open();
-                    SqlDataReader dr = cmd.ExecuteReader();
-                    List<Ordenes_pedido> lst = mapeo(dr);
-                    if (lst.Count != 0)
-                        obj = lst[0];
-                }
-                return obj;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+            nro_orden_pedido = null;
+            fecha_orden_pedido = null;
+            oficina_destino = null;
+            nom_proveedor = null;
+            solicitante = null;
+            aprobado = null;
+            nro_presupuesto = null;
+            nro_facturas = null;
+            fecha_recepcion = null;
+            total = null;
+            observacion = null;
+            nro_orden_compra = null;
+            fecha_orden_compra = null;
+            fecha_aprobacion = null;
+            fecha_envio_tc = null;
+            saldo = null;
+            usuario = null;
+            status = null;
         }
         private static int GenerarNuevoNroOrden(SqlConnection conn, SqlTransaction tx)
         {
@@ -628,6 +399,97 @@ namespace Web_Api_Contable.Entities.FOP
                 tx.Rollback();
                 throw;
             }
+        }
+
+
+        public static List<Ordenes_pedido> getOrdenByFecha(DateTime fechaDesde, DateTime fechaHasta, int tipoSeleccion)
+        {
+            var lista = new List<Ordenes_pedido>();
+
+            using var conn = GetConnectionSIIMVA(); // Hereda de DALBase
+            conn.Open();
+
+            using var cmd = new SqlCommand("EXEC PR_OBTENER_ORDENES @fechaDesde, @fechaHasta, @tipoSeleccion", conn);
+            cmd.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+            cmd.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+            cmd.Parameters.AddWithValue("@tipoSeleccion", tipoSeleccion);
+
+            using var reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                var op = new Ordenes_pedido
+                {
+                    nro_orden_pedido = reader.IsDBNull(reader.GetOrdinal("Nro_orden_pedido")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("Nro_orden_pedido")),
+                    fecha_orden_pedido = reader.IsDBNull(reader.GetOrdinal("fecha_op")) ? null : reader.GetString(reader.GetOrdinal("fecha_op")),
+                    oficina_destino = reader.IsDBNull(reader.GetOrdinal("destino")) ? null : reader.GetString(reader.GetOrdinal("destino")),
+                    nom_proveedor = reader.IsDBNull(reader.GetOrdinal("nom_proveedor")) ? null : reader.GetString(reader.GetOrdinal("nom_proveedor")),
+                    solicitante = reader.IsDBNull(reader.GetOrdinal("Solicitante")) ? null : reader.GetString(reader.GetOrdinal("Solicitante")),
+                    aprobado = reader.IsDBNull(reader.GetOrdinal("Aprobado")) ? null : reader.GetString(reader.GetOrdinal("Aprobado")),
+                    nro_presupuesto = reader.IsDBNull(reader.GetOrdinal("Nro_presupuesto")) ? null : reader.GetString(reader.GetOrdinal("Nro_presupuesto")),
+                    nro_facturas = reader.IsDBNull(reader.GetOrdinal("Nro_facturas")) ? null : reader.GetString(reader.GetOrdinal("Nro_facturas")),
+                    fecha_recepcion = reader.IsDBNull(reader.GetOrdinal("Fecha_recepcion")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("Fecha_recepcion")),
+                    total = reader.IsDBNull(reader.GetOrdinal("Total")) ? (decimal?)null : reader.GetDecimal(reader.GetOrdinal("Total")),
+                    observacion = reader.IsDBNull(reader.GetOrdinal("Observacion")) ? null : reader.GetString(reader.GetOrdinal("Observacion")),
+                    nro_orden_compra = reader.IsDBNull(reader.GetOrdinal("Nro_orden_compra")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("Nro_orden_compra")),
+                    fecha_orden_compra = reader.IsDBNull(reader.GetOrdinal("Fecha_orden_compra")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("Fecha_orden_compra")),
+                    fecha_aprobacion = reader.IsDBNull(reader.GetOrdinal("fecha_aprobacion")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("fecha_aprobacion")),
+                    fecha_envio_tc = reader.IsDBNull(reader.GetOrdinal("fecha_envio_tc")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("fecha_envio_tc")),
+                    saldo = reader.IsDBNull(reader.GetOrdinal("saldo")) ? (decimal?)null : reader.GetDecimal(reader.GetOrdinal("saldo")),
+                    usuario = reader.IsDBNull(reader.GetOrdinal("Usuario")) ? null : reader.GetString(reader.GetOrdinal("Usuario")),
+                    status = reader.IsDBNull(reader.GetOrdinal("OficinaUSR")) ? null : reader.GetString(reader.GetOrdinal("OficinaUSR")),
+                };
+
+                lista.Add(op);
+            }
+
+            return lista;
+        }
+
+        public static List<HistorialOrdenDePedido> getHistorialByNro(int nroOrdenPedido)
+        {
+            var lista = new List<HistorialOrdenDePedido>();
+
+            using var conn = GetConnectionSIIMVA();
+            conn.Open();
+
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+        SELECT 
+            a.nro_nota_pedido, 
+            a.nro_paso, 
+            CASE 
+              WHEN cod_estado_op = 1 THEN 'OP. Recibida'
+              WHEN cod_estado_op = 2 THEN 'OP. Devuelta'
+              WHEN cod_estado_op = 0 THEN 'Sin Estado'
+            END AS estado,
+            CONVERT(VARCHAR(10), a.fecha_mov_op, 103) AS fecha,
+            a.observaciones, 
+            a.responsable_op, 
+            a.usuario
+        FROM ORDENES_PEDIDO_MOVIMIENTOS a
+        WHERE a.nro_nota_pedido = @nro";
+
+            cmd.Parameters.AddWithValue("@nro", nroOrdenPedido);
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                var historial = new HistorialOrdenDePedido
+                {
+                    nro_nota_pedido = reader.GetInt32(0),
+                    nro_paso = reader.GetInt32(1),
+                    estado = reader.GetString(2),
+                    fecha = reader.GetString(3),
+                    observaciones = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    responsable_op = reader.IsDBNull(5) ? null : reader.GetString(5),
+                    usuario = reader.IsDBNull(6) ? null : reader.GetString(6),
+                };
+
+                lista.Add(historial);
+            }
+
+            return lista;
         }
 
 
