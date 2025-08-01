@@ -2,7 +2,7 @@
 {
     public class HistorialOrdenDePedido
     {
-        public int nro_nota_pedido { get; set; }
+        public int nro_orden_pedido { get; set; }
         public int nro_paso { get; set; }
         public string estado { get; set; }
         public string fecha { get; set; }
@@ -11,7 +11,7 @@
         public string usuario { get; set; }
         public HistorialOrdenDePedido()
         {
-            nro_nota_pedido = 0;
+            nro_orden_pedido = 0;
             nro_paso = 0;
             estado = string.Empty;
             fecha = string.Empty;

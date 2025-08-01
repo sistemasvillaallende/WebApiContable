@@ -455,20 +455,20 @@ namespace Web_Api_Contable.Entities.FOP
 
             using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
-        SELECT 
-            a.nro_nota_pedido, 
-            a.nro_paso, 
-            CASE 
-              WHEN cod_estado_op = 1 THEN 'OP. Recibida'
-              WHEN cod_estado_op = 2 THEN 'OP. Devuelta'
-              WHEN cod_estado_op = 0 THEN 'Sin Estado'
-            END AS estado,
-            CONVERT(VARCHAR(10), a.fecha_mov_op, 103) AS fecha,
-            a.observaciones, 
-            a.responsable_op, 
-            a.usuario
-        FROM ORDENES_PEDIDO_MOVIMIENTOS a
-        WHERE a.nro_nota_pedido = @nro";
+            SELECT 
+                a.nro_nota_pedido, 
+                a.nro_paso, 
+                CASE 
+                  WHEN cod_estado_op = 1 THEN 'OP. Recibida'
+                  WHEN cod_estado_op = 2 THEN 'OP. Devuelta'
+                  WHEN cod_estado_op = 0 THEN 'Sin Estado'
+                END AS estado,
+                CONVERT(VARCHAR(10), a.fecha_mov_op, 103) AS fecha,
+                a.observaciones, 
+                a.responsable_op, 
+                a.usuario
+            FROM ORDENES_PEDIDO_MOVIMIENTOS a
+            WHERE a.nro_nota_pedido = @nro";
 
             cmd.Parameters.AddWithValue("@nro", nroOrdenPedido);
 
@@ -477,7 +477,7 @@ namespace Web_Api_Contable.Entities.FOP
             {
                 var historial = new HistorialOrdenDePedido
                 {
-                    nro_nota_pedido = reader.GetInt32(0),
+                    nro_orden_pedido = reader.GetInt32(0),
                     nro_paso = reader.GetInt32(1),
                     estado = reader.GetString(2),
                     fecha = reader.GetString(3),
