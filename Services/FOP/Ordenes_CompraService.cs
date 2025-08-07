@@ -1,0 +1,20 @@
+﻿using Web_Api_Contable.Entities.FOP;
+using Web_Api_Contable.Models;
+
+namespace Web_Api_Contable.Services.FOP
+{
+    public class Ordenes_CompraService: IOrdenesCompraService
+    {
+        public Ordenes_compra getByPk(int nroOrdenCompra)
+        {
+            try
+            {
+                return Ordenes_compra.getByPk(nroOrdenCompra);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+    }
+}

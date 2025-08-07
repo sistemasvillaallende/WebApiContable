@@ -36,6 +36,8 @@ namespace Web_Api_Contable
             services.AddScoped<IDireccionService, DireccionesServices>();
             services.AddScoped<IProgramasService, ProgramaService>();
             services.AddScoped<IOficinaService,OficinaService>();
+            services.AddScoped<IOrdenesCompraService, Ordenes_CompraService>();
+            services.AddScoped<IDetalle_orden_compraService, Detalle_orden_compraService>();
             ////
             ///
             services.AddScoped<ISM_Solicitud_materialService, SM_Solicitud_materialService>();
