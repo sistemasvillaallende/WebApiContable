@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Web_Api_Contable.Models;
 using Web_Api_Contable.Services.FOP;
 
 namespace Web_Api_Contable.Controllers
@@ -20,6 +21,20 @@ namespace Web_Api_Contable.Controllers
             {
                 var resultado = _Ordenes_compraService.getByPk(nroOrdenCompra);
                 return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public IActionResult insert([FromBody] OrdenCompraRequest request)
+        {
+            try
+            {
+                this._Ordenes_compraService.insert(request.Orden, request.DetalleItems, request.Auditoria);
+                return Ok(new { message = "Orden de compra insertada correctamente" });
             }
             catch (Exception ex)
             {

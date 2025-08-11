@@ -16,5 +16,16 @@ namespace Web_Api_Contable.Services.FOP
                 throw ex;
             }
         }
+        public int insert(Orden_compra obj, List<detalle_orden_compra> detalleItems, Auditoria auditoria)
+        {
+            try
+            {
+                return Ordenes_compra.insert(obj, detalleItems, auditoria);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
     }
 }
