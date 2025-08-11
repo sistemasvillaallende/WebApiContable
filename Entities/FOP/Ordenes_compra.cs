@@ -206,7 +206,7 @@ namespace Web_Api_Contable.Entities.FOP
                         auditorCmd.Parameters.AddWithValue("@autorizacion", auditoria.autorizaciones);
                         auditorCmd.Parameters.AddWithValue("@identificacion", auditoria.identificacion);
                         auditorCmd.Parameters.AddWithValue("@observaciones", auditoria.observaciones);
-                        auditorCmd.Parameters.AddWithValue("@proceso", "NUEVA ORDEN DE PEDIDO");
+                        auditorCmd.Parameters.AddWithValue("@proceso", "NUEVA ORDEN DE COMPRA");
 
                         string detalle = $"Nº orden de compra: {obj.nroOrdenCompra} Fecha de orden de compra: {obj.fechaOrdenCompra:yyyy-MM-dd}";
                         auditorCmd.Parameters.AddWithValue("@detalle", detalle);
