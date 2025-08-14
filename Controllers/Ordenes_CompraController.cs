@@ -41,6 +41,19 @@ namespace Web_Api_Contable.Controllers
                 return StatusCode(500, new { error = ex.Message });
             }
         }
+        [HttpPost]
+        public IActionResult Update(int nroOrdenCompra ,[FromBody] OrdenCompraRequest request)
+        {
+            try
+            {
+               _Ordenes_compraService.update(nroOrdenCompra, request);
+                return Ok(new { message = "Orden de compra modificada correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
 
     }
 }

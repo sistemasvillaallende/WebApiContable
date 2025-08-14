@@ -264,6 +264,76 @@ namespace Web_Api_Contable.Entities.FOP
                 cmd.ExecuteNonQuery();
             }
         }
+        public static int update(int nroOrdenCompra, OrdenCompraRequest request)
+        {
+            using var conn = GetConnection();
+            conn.Open();
+            using var tx = conn.BeginTransaction();
+
+            try
+            {
+                // Validaciones
+                if (request.Orden.codProveedor == null)
+                    throw new Exception("Debe ingresar un proveedor.");
+
+                if (request.Orden.total <= 0)
+                    throw new Exception("El total de la orden debe ser mayor a cero.");
+
+                // Actualizar cabecera
+                var sqlUpdate = @"UPDATE Ordenes_compra SET 
+                            Total = @Total,
+                            Saldo = @Saldo,
+                            Cod_proveedor = @CodProveedor,
+                            Observacion = @Observacion
+                          WHERE nro_orden_compra = @nro_orden_compra";
+
+                using (var cmd = new SqlCommand(sqlUpdate, conn, tx))
+                {
+                    cmd.Parameters.AddWithValue("@Total", request.Orden.total);
+                    cmd.Parameters.AddWithValue("@Saldo", request.Orden.saldo);
+                    cmd.Parameters.AddWithValue("@CodProveedor", request.Orden.codProveedor);
+                    cmd.Parameters.AddWithValue("@Observacion", request.Orden.observacion ?? "");
+                    cmd.Parameters.AddWithValue("@nro_orden_compra", nroOrdenCompra);
+
+                    cmd.ExecuteNonQuery();
+                }
+
+                // Borrar detalle anterior
+                using (var cmdDel = new SqlCommand("DELETE FROM detalle_orden_compra WHERE @nro_orden_compra =@nro_orden_compra", conn, tx))
+                {
+                    cmdDel.Parameters.AddWithValue("@nro_orden_compra", nroOrdenCompra);
+                    cmdDel.ExecuteNonQuery();
+                }
+
+                // Insertar detalle nuevo
+                int nroItem = 1;
+                foreach (var item in request.DetalleItems)
+                {
+                    InsertDetalleOrdenCompra(nroOrdenCompra, nroItem++, item, conn, tx);
+                }
+
+                // Auditoría
+                using (var cmdAud = new SqlCommand("EXEC AUDITOR_V2 @usuario, @autorizacion, @identificacion, @observaciones, @proceso, @detalle", conn, tx))
+                {
+                    cmdAud.Parameters.AddWithValue("@usuario", request.Auditoria.usuario);
+                    cmdAud.Parameters.AddWithValue("@autorizacion", request.Auditoria.autorizaciones ?? "");
+                    cmdAud.Parameters.AddWithValue("@identificacion", request.Auditoria.identificacion);
+                    cmdAud.Parameters.AddWithValue("@observaciones", request.Auditoria.observaciones ?? "");
+                    cmdAud.Parameters.AddWithValue("@proceso", "MODIFICA ORDEN Compra");
+                    cmdAud.Parameters.AddWithValue("@detalle", $"Nº Orden Pedido: {nroOrdenCompra} Fecha Movimiento: {DateTime.Now:yyyy-MM-dd}");
+
+                    cmdAud.ExecuteNonQuery();
+                }
+
+                tx.Commit();
+                return nroOrdenCompra;
+            }
+            catch
+            {
+                tx.Rollback();
+                throw;
+            }
+        }
 
     }
 }

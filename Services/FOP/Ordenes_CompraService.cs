@@ -1,4 +1,5 @@
-﻿using Web_Api_Contable.Entities.FOP;
+﻿using Microsoft.AspNetCore.Mvc;
+using Web_Api_Contable.Entities.FOP;
 using Web_Api_Contable.Models;
 
 namespace Web_Api_Contable.Services.FOP
@@ -21,6 +22,17 @@ namespace Web_Api_Contable.Services.FOP
             try
             {
                 return Ordenes_compra.insert(obj, detalleItems, auditoria);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public void update(int nroOrdenCompra, [FromBody] OrdenCompraRequest request)
+        {
+            try
+            {
+                Ordenes_compra.update(nroOrdenCompra, request);
             }
             catch (Exception ex)
             {
