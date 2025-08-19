@@ -26,5 +26,19 @@ namespace Web_Api_Contable.Controllers
                 return StatusCode(500, new { error = ex.Message });
             }
         }
+
+        [HttpGet]
+        public IActionResult GetDetalleOrdenByEjercicio(int ejercicio)
+        {
+            try
+            {
+                var resultado = _Detalle_orden_compraService.getDetalleOrdenByEjercicio(ejercicio);
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
     }
 }

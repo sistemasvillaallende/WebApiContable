@@ -55,5 +55,35 @@ namespace Web_Api_Contable.Controllers
             }
         }
 
+        
+
+        [HttpPost]
+        public IActionResult Delete(int nroOrdenCompra, Auditoria request)
+        {
+            try
+            {
+                _Ordenes_compraService.delete(nroOrdenCompra, request);
+                return Ok(new { message = "Orden de compra eliminada correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public IActionResult GetOrdenByFecha(DateTime fechaDesde, DateTime fechaHasta)
+        {
+            try
+            {
+                var resultado = _Ordenes_compraService.getOrdenByFecha(fechaDesde, fechaHasta);
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
     }
 }

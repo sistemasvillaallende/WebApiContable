@@ -11,5 +11,9 @@ namespace Web_Api_Contable.Services.FOP
         public int insert(Orden_compra obj, List<detalle_orden_compra> detalleItems, Auditoria auditoria);
         public void update(int nroOrdenCompra, [FromBody] OrdenCompraRequest request);
 
+        public List<Ordenes_compra> getOrdenByFecha(DateTime fechaDesde, DateTime fechaHasta);
+
+        public void delete(int nroOrdenCompra, Auditoria request);
+
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Web_Api_Contable.Entities.GENERAL;
+using Web_Api_Contable.Models;
 
 namespace Web_Api_Contable.Entities.FOP
 {
@@ -115,6 +116,74 @@ namespace Web_Api_Contable.Entities.FOP
             }
 
             return detalleOrdenCompra;
+        }
+
+        public static List<Detalle_orden_compra> getDetalleOrdenByEjercicio(int ejercicio)
+        {
+            var ordenes = new List<Detalle_orden_compra>();
+
+            using var conn = GetConnectionSIIMVA();
+            conn.Open();
+
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+            SELECT 
+                nro_orden_compra,
+                nro_item,
+                id_Secretaria,
+                id_direccion,
+                des_item,
+                cantidad,
+                precio_unitario,
+                importe,
+                ejercicio,
+                anexo,
+                inciso,
+                partida_prin,
+                item,
+                sub_item,
+                partida,
+                sub_partida,
+                id_oficina,
+                id_programa,
+                mes,
+                nro_nota_contabi
+            FROM DETALLE_ORDEN_COMPRA
+            WHERE ejercicio = @ejercicio ";
+
+            cmd.Parameters.AddWithValue("@ejercicio", ejercicio);
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                var detalleOrdenCompra = new Detalle_orden_compra
+                {
+                    nro_orden_compra = reader.GetInt32(reader.GetOrdinal("nro_orden_compra")),
+                    nro_item = reader.GetInt32(reader.GetOrdinal("nro_item")),
+                    id_secretaria = reader.IsDBNull(reader.GetOrdinal("id_secretaria")) ? null : reader.GetInt32(reader.GetOrdinal("id_secretaria")),
+                    id_direccion = reader.IsDBNull(reader.GetOrdinal("id_direccion")) ? null : reader.GetInt32(reader.GetOrdinal("id_direccion")),
+                    des_item = reader.IsDBNull(reader.GetOrdinal("des_item")) ? null : reader.GetString(reader.GetOrdinal("des_item")),
+                    cantidad = Convert.ToSingle(reader["cantidad"]),
+                    precio_unitario = reader.GetDecimal(reader.GetOrdinal("precio_unitario")),
+                    importe = reader.GetDecimal(reader.GetOrdinal("importe")),
+                    ejercicio = reader.IsDBNull(reader.GetOrdinal("ejercicio")) ? null : reader.GetInt32(reader.GetOrdinal("ejercicio")),
+                    anexo = reader.IsDBNull(reader.GetOrdinal("anexo")) ? null : reader.GetInt32(reader.GetOrdinal("anexo")),
+                    inciso = reader.IsDBNull(reader.GetOrdinal("inciso")) ? null : reader.GetInt32(reader.GetOrdinal("inciso")),
+                    partida_prin = reader.IsDBNull(reader.GetOrdinal("partida_prin")) ? null : reader.GetInt32(reader.GetOrdinal("partida_prin")),
+                    item = reader.IsDBNull(reader.GetOrdinal("item")) ? null : reader.GetInt32(reader.GetOrdinal("item")),
+                    sub_item = reader.IsDBNull(reader.GetOrdinal("sub_item")) ? null : reader.GetInt32(reader.GetOrdinal("sub_item")),
+                    partida = reader.IsDBNull(reader.GetOrdinal("partida")) ? null : reader.GetInt32(reader.GetOrdinal("partida")),
+                    sub_partida = reader.IsDBNull(reader.GetOrdinal("sub_partida")) ? null : reader.GetInt32(reader.GetOrdinal("sub_partida")),
+                    id_oficina = reader.IsDBNull(reader.GetOrdinal("id_oficina")) ? null : reader.GetInt32(reader.GetOrdinal("id_oficina")),
+                    id_programa = reader.IsDBNull(reader.GetOrdinal("id_programa")) ? null : reader.GetInt32(reader.GetOrdinal("id_programa")),
+                    mes = reader.IsDBNull(reader.GetOrdinal("mes")) ? null : reader.GetInt32(reader.GetOrdinal("mes")),
+                    nro_nota_contabi = reader.IsDBNull(reader.GetOrdinal("nro_nota_contabi")) ? null : reader.GetInt32(reader.GetOrdinal("nro_nota_contabi"))
+                };
+
+                ordenes.Add(detalleOrdenCompra);
+            }
+
+            return ordenes;
         }
     }
 }

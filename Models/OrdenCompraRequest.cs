@@ -2,7 +2,7 @@
 {
     public class OrdenCompraRequest
     {
-        public Orden_compra Orden { get; set; }
+        public Orden_compra? Orden { get; set; }
         public List<detalle_orden_compra> DetalleItems { get; set; }
         public Auditoria Auditoria { get; set; }
     }

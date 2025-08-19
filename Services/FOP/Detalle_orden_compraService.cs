@@ -15,5 +15,17 @@ namespace Web_Api_Contable.Services.FOP
                 throw ex;
             }
         }
+
+        public List<Detalle_orden_compra> getDetalleOrdenByEjercicio(int ejercicio)
+        {
+            try
+            {
+                return Detalle_orden_compra.getDetalleOrdenByEjercicio(ejercicio);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
     }
 }

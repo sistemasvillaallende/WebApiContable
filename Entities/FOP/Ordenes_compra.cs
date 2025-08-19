@@ -335,5 +335,173 @@ namespace Web_Api_Contable.Entities.FOP
             }
         }
 
+        public static List<Ordenes_compra> getOrdenByFecha(DateTime fechaDesde, DateTime fechaHasta)
+        {
+            var ordenes = new List<Ordenes_compra>();
+
+            using var conn = GetConnectionSIIMVA();
+            conn.Open();
+
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+            SELECT 
+                nro_orden_compra,
+                fecha_orden_compra,
+                nro_nota_pedido,
+                total,
+                saldo,
+                cod_proveedor,
+                destino,
+                solicitante,
+                anulado,
+                fecha_anulado,
+                cod_estado_oc,
+                forma_pago,
+                observacion,
+                fecha_aprobacion,
+                aprobado,
+                fecha_envio_tc,
+                nro_presupuesto,
+                nro_facturas,
+                tieneFacturas,
+                usuario
+            FROM ORDENES_COMPRA
+            WHERE fecha_orden_compra BETWEEN @fechaDesde AND @fechaHasta";
+
+            cmd.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+            cmd.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                var ordenCompra = new Ordenes_compra
+                {
+                    nroOrdenCompra = reader.IsDBNull(reader.GetOrdinal("nro_orden_compra")) ? 0 : reader.GetInt32(reader.GetOrdinal("nro_orden_compra")),
+                    fechaOrdenCompra = reader.IsDBNull(reader.GetOrdinal("fecha_orden_compra")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("fecha_orden_compra")),
+                    nroNotaPedido = reader.IsDBNull(reader.GetOrdinal("nro_nota_pedido")) ? null : reader.GetInt32(reader.GetOrdinal("nro_nota_pedido")),
+                    total = reader.IsDBNull(reader.GetOrdinal("total")) ? 0 : Convert.ToDecimal(reader["total"]),
+                    saldo = reader.IsDBNull(reader.GetOrdinal("saldo")) ? 0 : Convert.ToDecimal(reader["saldo"]),
+                    codProveedor = reader.IsDBNull(reader.GetOrdinal("cod_proveedor")) ? 0 : Convert.ToInt32(reader["cod_proveedor"]),
+                    destino = reader.IsDBNull(reader.GetOrdinal("destino")) ? string.Empty : reader.GetString(reader.GetOrdinal("destino")),
+                    solicitante = reader.IsDBNull(reader.GetOrdinal("solicitante")) ? string.Empty : reader.GetString(reader.GetOrdinal("solicitante")),
+                    anulado = reader.IsDBNull(reader.GetOrdinal("anulado")) ? (bool?)null : Convert.ToInt32(reader["anulado"]) == 1,
+                    fechaAnulado = reader.IsDBNull(reader.GetOrdinal("fecha_anulado")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("fecha_anulado")),
+                    codEstadoOc = reader.IsDBNull(reader.GetOrdinal("cod_estado_oc")) ? (int?)null : Convert.ToInt32(reader["cod_estado_oc"]),
+                    formaPago = reader.IsDBNull(reader.GetOrdinal("forma_pago")) ? string.Empty : reader.GetString(reader.GetOrdinal("forma_pago")),
+                    observacion = reader.IsDBNull(reader.GetOrdinal("observacion")) ? string.Empty : reader.GetString(reader.GetOrdinal("observacion")),
+                    fechaAprobacion = reader.IsDBNull(reader.GetOrdinal("fecha_aprobacion")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("fecha_aprobacion")),
+                    aprobado = reader.IsDBNull(reader.GetOrdinal("aprobado")) ? (bool?)null : Convert.ToInt32(reader["aprobado"]) == 1,
+                    fechaEnvioTc = reader.IsDBNull(reader.GetOrdinal("fecha_envio_tc")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("fecha_envio_tc")),
+                    nroPresupuesto = reader.IsDBNull(reader.GetOrdinal("nro_presupuesto")) ? string.Empty : reader.GetString(reader.GetOrdinal("nro_presupuesto")),
+                    nroFacturas = reader.IsDBNull(reader.GetOrdinal("nro_facturas")) ? string.Empty : reader.GetString(reader.GetOrdinal("nro_facturas")),
+                    tieneFacturas = reader.IsDBNull(reader.GetOrdinal("tieneFacturas")) ? (bool?)null : Convert.ToInt32(reader["tieneFacturas"]) == 1,
+                    usuario = reader.IsDBNull(reader.GetOrdinal("usuario")) ? string.Empty : reader.GetString(reader.GetOrdinal("usuario"))
+                };
+
+                ordenes.Add(ordenCompra);
+            }
+
+            return ordenes;
+        }
+
+        public static void delete(int nroOrdenCompra, Auditoria request)
+        {
+            using var conn = DALBase.GetConnection();
+            conn.Open();
+
+            using var tx = conn.BeginTransaction();
+
+            try
+            {
+                // Validar si la orden tiene pagos o notas de contabilidad (saldo distinto de total)
+                using (var checkSaldo = new SqlCommand(
+                    @"SELECT Total, Saldo 
+                      FROM Ordenes_compra 
+                      WHERE nro_orden_compra = @nro_orden_compra", conn, tx))
+                {
+                    checkSaldo.Parameters.AddWithValue("@nro_orden_compra", nroOrdenCompra);
+
+                    using var reader = checkSaldo.ExecuteReader();
+                    if (reader.Read())
+                    {
+                        decimal total = reader.GetDecimal(0);
+                        decimal saldo = reader.GetDecimal(1);
+
+                        if (total != saldo)
+                            throw new Exception("La orden ya fue afectada por una Orden de Pago o Nota de Contabilidad.");
+                    }
+                }
+
+                // Validar si el balance mensual del período está cerrado
+                using (var checkBalance = new SqlCommand(
+                    @"SELECT FECHA_CIERRE
+                      FROM Bal_Men_Egresos 
+                      WHERE EJERCICIO = YEAR(GETDATE()) 
+                      AND MES = MONTH(GETDATE())", conn, tx))
+                {
+                    var fechaCierre = checkBalance.ExecuteScalar();
+                    if (fechaCierre != DBNull.Value && fechaCierre != null)
+                        throw new Exception("El balance mensual correspondiente ya se cerró.");
+                }
+
+                // Verificar si está asociada a una orden de pedido finalizada
+                using (var checkCmd = new SqlCommand(
+                    @"SELECT nro_orden_pedido 
+                      FROM Ordenes_pedido 
+                      WHERE nro_orden_compra = @nro_orden_compra 
+                      AND Finalizado = 1", conn, tx))
+                {
+                    checkCmd.Parameters.AddWithValue("@nro_orden_compra", nroOrdenCompra);
+
+                    var result = checkCmd.ExecuteScalar();
+                    if (result != DBNull.Value && result != null)
+                    {
+                        throw new Exception($"La orden está asociada a la orden de pedido nro: {result}");
+                    }
+                }
+
+                // Elimina primero el detalle
+                using (var delDetalle = new SqlCommand(
+                    @"DELETE FROM Detalle_orden_compra 
+                    WHERE nro_orden_compra = @nro_orden_compra", conn, tx))
+                {
+                    delDetalle.Parameters.AddWithValue("@nro_orden_compra", nroOrdenCompra);
+                    delDetalle.ExecuteNonQuery();
+                }
+
+                // Luego elimina la orden
+                using (var delOrden = new SqlCommand(
+                    @"DELETE FROM Ordenes_compra
+              WHERE nro_orden_compra = @nro_orden_compra", conn, tx))
+                {
+                    delOrden.Parameters.AddWithValue("@nro_orden_compra", nroOrdenCompra);
+                    delOrden.ExecuteNonQuery();
+                }
+
+                // Auditoría
+                using (var cmdAud = new SqlCommand(
+                    "EXEC AUDITOR_V2 @usuario, @autorizacion, @identificacion, @observaciones, @proceso, @detalle", conn, tx))
+                {
+                    cmdAud.Parameters.AddWithValue("@usuario", request.usuario);
+                    cmdAud.Parameters.AddWithValue("@autorizacion", request.autorizaciones ?? "");
+                    cmdAud.Parameters.AddWithValue("@identificacion", nroOrdenCompra.ToString());
+                    cmdAud.Parameters.AddWithValue("@observaciones", request.observaciones ?? "");
+                    cmdAud.Parameters.AddWithValue("@proceso", "ELIMINA ORDEN COMPRA");
+                    cmdAud.Parameters.AddWithValue("@detalle",
+                        $"Nº Orden Compra: {nroOrdenCompra} - Fecha Movimiento: {DateTime.Now:yyyy-MM-dd}");
+
+                    cmdAud.ExecuteNonQuery();
+                }
+
+                tx.Commit();
+            }
+            catch
+            {
+                tx.Rollback();
+                throw;
+            }
+        }
+
+
     }
 }

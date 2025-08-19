@@ -39,5 +39,28 @@ namespace Web_Api_Contable.Services.FOP
                 throw ex;
             }
         }
+
+        public void delete(int nroOrdenCompra ,Auditoria request)
+        {
+            try
+            {
+                Ordenes_compra.delete(nroOrdenCompra,request);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public List<Ordenes_compra> getOrdenByFecha(DateTime fechaDesde, DateTime fechaHasta)
+        {
+            try
+            {
+                return Ordenes_compra.getOrdenByFecha(fechaDesde, fechaHasta);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
     }
 }
