@@ -408,89 +408,147 @@ namespace Web_Api_Contable.Entities.FOP
         {
             using var conn = DALBase.GetConnection();
             conn.Open();
-
             using var tx = conn.BeginTransaction();
 
             try
             {
-                // Validar si la orden tiene pagos o notas de contabilidad (saldo distinto de total)
+                // 1. Validar que no tenga pagos o notas contables
                 using (var checkSaldo = new SqlCommand(
-                    @"SELECT Total, Saldo 
-                      FROM Ordenes_compra 
-                      WHERE nro_orden_compra = @nro_orden_compra", conn, tx))
-                {
-                    checkSaldo.Parameters.AddWithValue("@nro_orden_compra", nroOrdenCompra);
-
-                    using var reader = checkSaldo.ExecuteReader();
-                    if (reader.Read())
-                    {
-                        decimal total = reader.GetDecimal(0);
-                        decimal saldo = reader.GetDecimal(1);
-
-                        if (total != saldo)
-                            throw new Exception("La orden ya fue afectada por una Orden de Pago o Nota de Contabilidad.");
-                    }
-                }
-
-                // Validar si el balance mensual del período está cerrado
-                using (var checkBalance = new SqlCommand(
-                    @"SELECT FECHA_CIERRE
-                      FROM Bal_Men_Egresos 
-                      WHERE EJERCICIO = YEAR(GETDATE()) 
-                      AND MES = MONTH(GETDATE())", conn, tx))
-                {
-                    var fechaCierre = checkBalance.ExecuteScalar();
-                    if (fechaCierre != DBNull.Value && fechaCierre != null)
-                        throw new Exception("El balance mensual correspondiente ya se cerró.");
-                }
-
-                // Verificar si está asociada a una orden de pedido finalizada
-                using (var checkCmd = new SqlCommand(
-                    @"SELECT nro_orden_pedido 
-                      FROM Ordenes_pedido 
-                      WHERE nro_orden_compra = @nro_orden_compra 
-                      AND Finalizado = 1", conn, tx))
-                {
-                    checkCmd.Parameters.AddWithValue("@nro_orden_compra", nroOrdenCompra);
-
-                    var result = checkCmd.ExecuteScalar();
-                    if (result != DBNull.Value && result != null)
-                    {
-                        throw new Exception($"La orden está asociada a la orden de pedido nro: {result}");
-                    }
-                }
-
-                // Elimina primero el detalle
-                using (var delDetalle = new SqlCommand(
-                    @"DELETE FROM Detalle_orden_compra 
-                    WHERE nro_orden_compra = @nro_orden_compra", conn, tx))
-                {
-                    delDetalle.Parameters.AddWithValue("@nro_orden_compra", nroOrdenCompra);
-                    delDetalle.ExecuteNonQuery();
-                }
-
-                // Luego elimina la orden
-                using (var delOrden = new SqlCommand(
-                    @"DELETE FROM Ordenes_compra
+                    @"SELECT Total, Saldo, fecha_orden_compra, nro_orden_pedido, cod_proveedor 
+              FROM Ordenes_compra 
               WHERE nro_orden_compra = @nro_orden_compra", conn, tx))
                 {
-                    delOrden.Parameters.AddWithValue("@nro_orden_compra", nroOrdenCompra);
-                    delOrden.ExecuteNonQuery();
-                }
+                    checkSaldo.Parameters.AddWithValue("@nro_orden_compra", nroOrdenCompra);
+                    using var reader = checkSaldo.ExecuteReader();
+                    if (!reader.Read())
+                        throw new Exception("La orden de compra no existe.");
 
-                // Auditoría
-                using (var cmdAud = new SqlCommand(
-                    "EXEC AUDITOR_V2 @usuario, @autorizacion, @identificacion, @observaciones, @proceso, @detalle", conn, tx))
-                {
-                    cmdAud.Parameters.AddWithValue("@usuario", request.usuario);
-                    cmdAud.Parameters.AddWithValue("@autorizacion", request.autorizaciones ?? "");
-                    cmdAud.Parameters.AddWithValue("@identificacion", nroOrdenCompra.ToString());
-                    cmdAud.Parameters.AddWithValue("@observaciones", request.observaciones ?? "");
-                    cmdAud.Parameters.AddWithValue("@proceso", "ELIMINA ORDEN COMPRA");
-                    cmdAud.Parameters.AddWithValue("@detalle",
-                        $"Nº Orden Compra: {nroOrdenCompra} - Fecha Movimiento: {DateTime.Now:yyyy-MM-dd}");
+                    decimal total = reader.GetDecimal(0);
+                    decimal saldo = reader.GetDecimal(1);
+                    DateTime fechaOrden = reader.GetDateTime(2);
+                    object nroOrdenPedidoObj = reader.IsDBNull(3) ? null : reader.GetInt32(3);
+                    int? nroOrdenPedido = nroOrdenPedidoObj as int?;
+                    string codProveedor = reader.GetString(4);
 
-                    cmdAud.ExecuteNonQuery();
+                    if (total != saldo)
+                        throw new Exception("La orden ya fue afectada por una Orden de Pago o Nota de Contabilidad.");
+
+                    // 2. Validar balance mensual cerrado
+                    using (var checkBalance = new SqlCommand(
+                        @"SELECT FECHA_CIERRE
+                  FROM Bal_Men_Egresos 
+                  WHERE EJERCICIO = YEAR(@fecha) 
+                  AND MES = MONTH(@fecha)", conn, tx))
+                    {
+                        checkBalance.Parameters.AddWithValue("@fecha", fechaOrden);
+                        var fechaCierre = checkBalance.ExecuteScalar();
+                        if (fechaCierre != DBNull.Value && fechaCierre != null)
+                            throw new Exception("El balance mensual correspondiente ya se cerró.");
+                    }
+
+                    reader.Close();
+
+                    // 3. Ajustar Presupuesto_Egreso según el detalle
+                    using (var detalleCmd = new SqlCommand(
+                        @"SELECT ejercicio, anexo, inciso, partida_prin, item, sub_item, partida, sub_partida, importe 
+                  FROM Detalle_orden_compra
+                  WHERE nro_orden_compra = @nro_orden_compra", conn, tx))
+                    {
+                        detalleCmd.Parameters.AddWithValue("@nro_orden_compra", nroOrdenCompra);
+                        using var detReader = detalleCmd.ExecuteReader();
+                        while (detReader.Read())
+                        {
+                            int ejercicio = detReader.GetInt32(0);
+                            int anexo = detReader.GetInt32(1);
+                            int inciso = detReader.GetInt32(2);
+                            int partidaPrin = detReader.GetInt32(3);
+                            int item = detReader.GetInt32(4);
+                            int subItem = detReader.GetInt32(5);
+                            int partida = detReader.GetInt32(6);
+                            int subPartida = detReader.GetInt32(7);
+                            decimal importe = detReader.GetDecimal(8);
+
+                            using (var updPres = new SqlCommand(
+                                @"UPDATE PRESUPUESTO_EGRESO
+                          SET importe_imputado = importe_imputado - @importe,
+                              importe_a_pagar = importe_a_pagar - @importe
+                          WHERE ejercicio=@ejercicio AND anexo=@anexo AND inciso=@inciso
+                            AND partida_prin=@partida_prin AND item=@item AND sub_item=@sub_item
+                            AND partida=@partida AND sub_partida=@sub_partida", conn, tx))
+                            {
+                                updPres.Parameters.AddWithValue("@importe", importe);
+                                updPres.Parameters.AddWithValue("@ejercicio", ejercicio);
+                                updPres.Parameters.AddWithValue("@anexo", anexo);
+                                updPres.Parameters.AddWithValue("@inciso", inciso);
+                                updPres.Parameters.AddWithValue("@partida_prin", partidaPrin);
+                                updPres.Parameters.AddWithValue("@item", item);
+                                updPres.Parameters.AddWithValue("@sub_item", subItem);
+                                updPres.Parameters.AddWithValue("@partida", partida);
+                                updPres.Parameters.AddWithValue("@sub_partida", subPartida);
+
+                                updPres.ExecuteNonQuery();
+                            }
+                        }
+                    }
+
+                    // 4. Borrar detalle de orden de compra
+                    using (var delDetalle = new SqlCommand(
+                        @"DELETE FROM Detalle_orden_compra 
+                  WHERE nro_orden_compra = @nro_orden_compra", conn, tx))
+                    {
+                        delDetalle.Parameters.AddWithValue("@nro_orden_compra", nroOrdenCompra);
+                        delDetalle.ExecuteNonQuery();
+                    }
+
+                    // 5. Borrar Presup_Egr_Comprometido
+                    using (var delPres = new SqlCommand(
+                        @"DELETE FROM PRESUP_EGR_COMPROMETIDO 
+                  WHERE ejercicio = YEAR(@fecha) AND nro_orden_compra = @nro_orden_compra", conn, tx))
+                    {
+                        delPres.Parameters.AddWithValue("@fecha", fechaOrden);
+                        delPres.Parameters.AddWithValue("@nro_orden_compra", nroOrdenCompra);
+                        delPres.ExecuteNonQuery();
+                    }
+
+                    // 6. Borrar orden de compra
+                    using (var delOrden = new SqlCommand(
+                        @"DELETE FROM Ordenes_compra 
+                  WHERE nro_orden_compra = @nro_orden_compra", conn, tx))
+                    {
+                        delOrden.Parameters.AddWithValue("@nro_orden_compra", nroOrdenCompra);
+                        delOrden.ExecuteNonQuery();
+                    }
+
+                    // 7. Si tenía orden de pedido asociada, actualizar
+                    if (nroOrdenPedido.HasValue)
+                    {
+                        using (var updOrdPed = new SqlCommand(
+                            @"UPDATE ORDENES_PEDIDO
+                      SET finalizado = 0,
+                          nro_orden_compra = null,
+                          fecha_orden_compra=null,
+                          fecha_aprobacion=null
+                      WHERE nro_orden_pedido = @nro_orden_pedido", conn, tx))
+                        {
+                            updOrdPed.Parameters.AddWithValue("@nro_orden_pedido", nroOrdenPedido.Value);
+                            updOrdPed.ExecuteNonQuery();
+                        }
+                    }
+
+                    // 8. Auditoría
+                    using (var cmdAud = new SqlCommand(
+                        "EXEC AUDITOR_V2 @usuario, @autorizacion, @identificacion, @observaciones, @proceso, @detalle", conn, tx))
+                    {
+                        cmdAud.Parameters.AddWithValue("@usuario", request.usuario);
+                        cmdAud.Parameters.AddWithValue("@autorizacion", request.autorizaciones ?? "");
+                        cmdAud.Parameters.AddWithValue("@identificacion", nroOrdenCompra.ToString());
+                        cmdAud.Parameters.AddWithValue("@observaciones", request.observaciones ?? "");
+                        cmdAud.Parameters.AddWithValue("@proceso", "ELIMINA ORDEN COMPRA");
+                        cmdAud.Parameters.AddWithValue("@detalle",
+                            $"Nº Orden Compra: {nroOrdenCompra} - Fec. Orden Compra: {fechaOrden:yyyy-MM-dd} - Total: {total} - Saldo: {saldo} - Proveedor: {codProveedor}");
+
+                        cmdAud.ExecuteNonQuery();
+                    }
                 }
 
                 tx.Commit();
@@ -501,7 +559,6 @@ namespace Web_Api_Contable.Entities.FOP
                 throw;
             }
         }
-
 
     }
 }
