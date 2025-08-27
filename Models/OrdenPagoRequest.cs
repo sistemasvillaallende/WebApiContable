@@ -4,9 +4,6 @@
     {
         public OrdenPago Orden { get; set; }
         public List<FormaPagoOrden> FormasPago { get; set; }
-        public List<CtaOrdenPago> CtasOrdenPago { get; set; }
-        public List<PagoOrdenCompra> PagosOrdenCompra { get; set; }
-        public List<PagoProgramaPublico> PagosProgramasPublicos { get; set; }
         public RetencionRequest Retenciones { get; set; }
         public string Concepto { get; set; }
         public Auditoria Auditoria { get; set; }

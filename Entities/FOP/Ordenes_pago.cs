@@ -93,9 +93,10 @@ namespace Web_Api_Contable.Entities.FOP
                         foreach (var fp in request.FormasPago)
                         {
                             using (var cmdFP = new SqlCommand(
-                                      @"INSERT INTO Forma_Pago_Orden ( nro_item,cod_tipo_movimiento,cod_banco,nro_cuenta,nro_comprobante,fecha_acreditacion,importe,pendiente)
-                                        VALUES (@NroItem,@CodTipoMov,@CodBanco,@NroCuenta,@NroComprobante,@FechaAcreditacion,@Importe,@Pendiente)", con, tx))
+                                      @"INSERT INTO Forma_Pago_Orden (nro_Orden_Pago,nro_item,cod_tipo_movimiento,cod_banco,nro_cuenta,nro_comprobante,fecha_acreditacion,importe,pendiente)
+                                        VALUES (@NroOrdenPago,@NroItem,@CodTipoMov,@CodBanco,@NroCuenta,@NroComprobante,@FechaAcreditacion,@Importe,@Pendiente)", con, tx))
                             {
+                                cmdFP.Parameters.AddWithValue("@NroOrdenPago", nroOrdenPago);
                                 cmdFP.Parameters.AddWithValue("@NroItem", fp.NroItem);
                                 cmdFP.Parameters.AddWithValue("@CodTipoMov", fp.CodTipoMovimiento);
                                 cmdFP.Parameters.AddWithValue("@CodBanco", fp.CodBanco);
@@ -109,10 +110,9 @@ namespace Web_Api_Contable.Entities.FOP
 
                             using (var cmdMov = new SqlCommand(
                                        @"INSERT INTO Movimientos_Bancarios
-                                     (Nro_Orden_Pago, Cod_Banco, Nro_Cuenta, Cod_Tipo_Movimiento, Nro_Comprobante, Concepto, Fecha_Movimiento, Fecha_Acreditacion, Pendiente, Conciliado, Cancelado, Importe)
-                                     VALUES (@NroOrden, @CodBanco, @Cuenta, @CodTipoMov, @NroComp, @Concepto, @FechaMov, @FechaAcreditacion, @Pendiente, @Conciliado, @Cancelado, @Importe)", con, tx))
+                                     (Cod_Banco, Nro_Cuenta, Cod_Tipo_Movimiento, Nro_Comprobante, Concepto, Fecha_Movimiento, Fecha_Acreditacion, Pendiente, Conciliado, Cancelado, Importe)
+                                     VALUES (@CodBanco, @Cuenta, @CodTipoMov, @NroComp, @Concepto, @FechaMov, @FechaAcreditacion, @Pendiente, @Conciliado, @Cancelado, @Importe)", con, tx))
                             {
-                                cmdMov.Parameters.AddWithValue("@NroOrden", nroOrdenPago);
                                 cmdMov.Parameters.AddWithValue("@CodBanco", fp.CodBanco);
                                 cmdMov.Parameters.AddWithValue("@Cuenta", fp.NroCuenta);
                                 cmdMov.Parameters.AddWithValue("@CodTipoMov", fp.CodTipoMovimiento);
@@ -139,19 +139,29 @@ namespace Web_Api_Contable.Entities.FOP
                             {
                                 cmdMax.Parameters.AddWithValue("@anio", anioRetencion);
                                 nroRetencion = (int)cmdMax.ExecuteScalar() + 1;
+
+                                using (var cmdUpdateOrden = new SqlCommand(
+                                           "UPDATE Ordenes_Pago SET nro_retencion = @NroRetencion WHERE nro_orden_pago = @NroOrdenPago", con, tx))
+                                {
+                                    cmdUpdateOrden.Parameters.AddWithValue("@NroRetencion", nroRetencion);
+                                    cmdUpdateOrden.Parameters.AddWithValue("@NroOrdenPago", nroOrdenPago);
+                                    cmdUpdateOrden.ExecuteNonQuery();
+                                }
                             }
 
                             string certificado = nroRetencion.ToString("D6") + anioRetencion.ToString("D4");
 
                             using (var cmdCab = new SqlCommand(
-                                       @"INSERT INTO RETENCION_CABECERA_PROV (nro_retencion, anio, fecha_movimiento, importe, anulado, usuario, certificado)
-                                     VALUES (@NroRet, @Anio, @FechaMov, @Importe, 0, @Usuario, @Certificado)", con, tx))
+                                       @"INSERT INTO RETENCION_CABECERA_PROV (anio,nro_retencion, fecha_movimiento, importe, anulado, usuario,fecha_anulado,usuario_anula,certificado)
+                                     VALUES (@Anio,@NroRet, @FechaMov, @Importe, 0, @Usuario, @FechaAnul, @UsuarioAnula, @Certificado)", con, tx))
                             {
-                                cmdCab.Parameters.AddWithValue("@NroRet", nroRetencion);
                                 cmdCab.Parameters.AddWithValue("@Anio", anioRetencion);
+                                cmdCab.Parameters.AddWithValue("@NroRet", nroRetencion);
                                 cmdCab.Parameters.AddWithValue("@FechaMov", DateTime.Now);
-                                cmdCab.Parameters.AddWithValue("@Importe", request.Retenciones.Detalle.Sum(r => r.Importe));
+                                cmdCab.Parameters.AddWithValue("@Importe", request.Retenciones.ImporteTotal);
                                 cmdCab.Parameters.AddWithValue("@Usuario", request.Auditoria.usuario);
+                                cmdCab.Parameters.AddWithValue("@FechaAnul", DateTime.Now);
+                                cmdCab.Parameters.AddWithValue("@UsuarioAnula", request.Auditoria.usuario);
                                 cmdCab.Parameters.AddWithValue("@Certificado", certificado);
                                 cmdCab.ExecuteNonQuery();
                             }

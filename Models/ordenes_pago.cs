@@ -9,7 +9,7 @@
         public string Usuario { get; set; }
         public string NroFactura { get; set; }
         public string NroRecibo { get; set; }
-        public string? RetencionSI { get; set; }
+        public bool? RetencionSI { get; set; }
         public decimal? APagar { get; set; }
         public decimal? Retencion { get; set; }
         public string NroRetencion { get; set; }
