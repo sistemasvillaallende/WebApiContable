@@ -17,5 +17,16 @@ namespace Web_Api_Contable.Services.FOP
                 throw ex;
             }
         }
+        public void delete(int nroOrdenPago, Auditoria request)
+        {
+            try
+            {
+                Ordenes_pago.delete(nroOrdenPago, request);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
     }
 }
